@@ -7,7 +7,10 @@ const W = 0.048, H = 0.058, D = 0.017;
 const R_TOP = 0.021, R_BOT = 0.008;
 const FRONT = D / 2;
 
-const DIAL_Y = -0.0035, DIAL_R = 0.019;
+const DIAL_Y = -0.0035;
+/** The dial's radius, in the model's metres — also how far out a finger may
+ *  land and still be on it. */
+export const DIAL_R = 0.019;
 const ROD = 0.0035, SPAN = 0.028, BEND = 0.014, TOPY = 0.0085;
 
 /** Metres to stage units. The body ends up a shade over one unit tall. */

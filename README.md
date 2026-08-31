@@ -32,6 +32,11 @@ npm run dev               # → http://localhost:5173
 Click the mic, allow the browser's microphone prompt, and start talking. Talk
 over it and it stops — and shuts itself with a bang.
 
+The dial is yours as well as its: drag it and it lets go of the combination,
+clicks through the numbers under your finger, and coasts onto one when you let
+go. Three turns of your own and it opens — you did the work, so it doesn't get
+to roll for it. Dragging anywhere else on the stage still turns the camera.
+
 Tapping the mic is the microphone switch: turning it off stops what you send and
 leaves the answer playing, and the conversation is still there when you turn it
 back on. It also switches itself off after a minute of silence, and the call

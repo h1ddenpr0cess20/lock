@@ -1,5 +1,6 @@
 import { buildEnvironment } from './environment.js';
 import { createPadlock, LIFT, SWING } from './geometry.js';
+import { grabbableDial } from './grab.js';
 import { ENERGY_GAIN, MOODS } from './moods.js';
 
 function spring(s, k, c, dt, to = 0) {
@@ -32,6 +33,19 @@ const CRACK_CHANCE = 0.6;
 /** How long it stays open before the shackle drops back in. */
 const OPEN_MIN = 2.6;
 const OPEN_VAR = 3.4;
+
+/** Let go of the dial mid-spin and it coasts: how much of the turn it was
+ *  going at carries on, and the most that can ever be — a hard flick should
+ *  read as a spin, not as a bolt. */
+const COAST = 0.2;
+const COAST_MAX = TAU * 2.2;
+
+/** How much of a turn counts as working it rather than brushing past it. */
+const TURN_MIN = TAU * 0.4;
+
+/** How long it keeps its hands off after somebody else has had a go. */
+const HANDS_OFF_MIN = 1.1;
+const HANDS_OFF_VAR = 0.9;
 
 export function createLock({ stage, THREE }) {
   buildEnvironment({ stage, THREE });
@@ -78,6 +92,14 @@ export function createLock({ stage, THREE }) {
   let dwell = 0;
   let clicked = 0;
   let landed = true;
+
+  /** Somebody else's hand on it: whether it is held, where it was when they
+   *  took it, how long it leaves the dial alone afterwards, and how many legs
+   *  of the combination they have turned in. */
+  let held = false;
+  let heldFrom = 0;
+  let handsOff = 0;
+  let turnedIn = 0;
 
   /** The shackle: open now, open wanted, and how long until it drops shut. */
   let openT = 0, openTo = 0, openFor = 0;
@@ -163,28 +185,33 @@ export function createLock({ stage, THREE }) {
        the time, so it is never quite still. Nothing to crack while it is
        already open, so it leaves the dial alone until the shackle drops. */
     if (dwell > 0) dwell -= dt;
-    const working = target.spin > 0.6 && !raging && openTo === 0;
-    const arrived = Math.abs(dialTo - dial.rotation.z) < DETENT * 0.05;
-    if (arrived && !landed) {
-      /** It has just come to rest on a number: hold it there for a beat. */
-      landed = true;
-      dwell = working ? 0.16 + Math.random() * 0.26 : 0.3;
-    } else if (arrived && dwell <= 0) {
-      /** Where a run gets to is kept, so a short think picks up where the last
-       *  one left off rather than starting the combination over every time. */
-      if (working) { nextLeg(); landed = false; }
-      else if (target.spin > 0.02) {
-        fidget -= dt * target.spin * 4;
-        if (fidget <= 0) {
-          fidget = 1.4 + Math.random() * 3.2;
-          dialTo = toDetent(dial.rotation.z + (Math.random() < 0.5 ? -1 : 1) * DETENT
-            * (1 + Math.floor(Math.random() * 3)));
-          landed = false;
+    if (handsOff > 0) handsOff -= dt;
+    /** Its own run is off while a hand is on the dial, and for a beat after. */
+    const working = target.spin > 0.6 && !raging && openTo === 0 && !held && handsOff <= 0;
+    if (!held) {
+      const arrived = Math.abs(dialTo - dial.rotation.z) < DETENT * 0.05;
+      if (arrived && !landed) {
+        /** It has just come to rest on a number: hold it there for a beat. */
+        landed = true;
+        dwell = working ? 0.16 + Math.random() * 0.26 : 0.3;
+      } else if (arrived && dwell <= 0) {
+        /** Where a run gets to is kept, so a short think picks up where the last
+         *  one left off rather than starting the combination over every time. */
+        if (working) { nextLeg(); landed = false; }
+        else if (target.spin > 0.02 && handsOff <= 0) {
+          fidget -= dt * target.spin * 4;
+          if (fidget <= 0) {
+            fidget = 1.4 + Math.random() * 3.2;
+            dialTo = toDetent(dial.rotation.z + (Math.random() < 0.5 ? -1 : 1) * DETENT
+              * (1 + Math.floor(Math.random() * 3)));
+            landed = false;
+          }
         }
       }
     }
     const was = dial.rotation.z;
-    dial.rotation.z += (dialTo - dial.rotation.z) * Math.min(1, dt * 6);
+    /** Held, it goes where the finger goes — nothing to ease towards. */
+    dial.rotation.z = held ? dialTo : dial.rotation.z + (dialTo - dial.rotation.z) * Math.min(1, dt * 6);
     const speed = Math.abs(dial.rotation.z - was) / Math.max(dt, 1e-4);
 
     /** The clicks you can feel — only once it is slow enough to feel them. */
@@ -295,7 +322,7 @@ export function createLock({ stage, THREE }) {
         sq.v += onset * 20;
         tz.v += (Math.random() - 0.5) * onset * 16;
         /** A word it means lands as a nudge on the dial. */
-        if (onset > 0.05 && dwell <= 0) dialTo = toDetent(dialTo + (Math.random() < 0.5 ? -1 : 1) * DETENT);
+        if (onset > 0.05 && dwell <= 0 && !held) dialTo = toDetent(dialTo + (Math.random() < 0.5 ? -1 : 1) * DETENT);
         /** And once in a while it makes a point hard enough to open itself. */
         if (onset > 0.09 && flourish <= 0) {
           flourish = 35 + Math.random() * 45;
@@ -327,6 +354,45 @@ export function createLock({ stage, THREE }) {
     const s = sq.p * 0.06 + breathe;
     body.scale.set(1 + s * 0.45, 1 - s, 1 + s * 0.45);
   };
+
+  /* ── somebody else's hand on it ───────────────────────────
+     Drag the dial and it is yours: it stops working the combination, the
+     clicks are the ones being turned through, and where it is let go is where
+     it picks the run back up from. Three deliberate turns and it opens —
+     somebody else did the work, so it does not get to roll for it. */
+  grabbableDial({
+    stage,
+    THREE,
+    dial,
+    onGrab() {
+      held = true;
+      heldFrom = dial.rotation.z;
+      dwell = 0;
+      landed = false;
+      /** Not its go any more: it has lost its place in its own run. */
+      leg = 0;
+      sq.v += 0.7;
+    },
+
+    onTurn(turn) {
+      dialTo = heldFrom + turn;
+    },
+
+    onRelease({ turn, spin }) {
+      held = false;
+      handsOff = HANDS_OFF_MIN + Math.random() * HANDS_OFF_VAR;
+      /** Let go mid-spin and it carries on, decelerating onto a number. */
+      const coast = Math.max(-COAST_MAX, Math.min(COAST_MAX, spin * COAST));
+      dialTo = toDetent(dial.rotation.z + coast);
+      landed = false;
+      /** A nudge is not a leg, and there is nothing to crack while it is open. */
+      if (Math.abs(turn) + Math.abs(coast) < TURN_MIN || openTo === 1 || rage > 0.35) return;
+      if (++turnedIn >= LEGS) {
+        turnedIn = 0;
+        open();
+      }
+    },
+  });
 
   stage.setObject(character);
 
@@ -404,8 +470,10 @@ export function createLock({ stage, THREE }) {
       /** Cut off, it shuts itself with a bang and goes back to the start. */
       shutIt(7.5);
       leg = 0;
+      turnedIn = 0;
       dwell = 0.3;
-      dialTo = toDetent(dial.rotation.z - TAU * 0.6);
+      /** Unless somebody is holding it — it does not get to yank it away. */
+      if (!held) dialTo = toDetent(dial.rotation.z - TAU * 0.6);
     },
   };
 }
