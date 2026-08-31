@@ -3,17 +3,20 @@ import { after, before, describe, it } from 'node:test';
 
 import { startApp } from '../helpers/app.js';
 
+/** The one MCP server these tests configure. Nothing about it but the label
+ *  may reach the page, so the values live here and the leak check reads them
+ *  back rather than restating them. */
+const MCP = Object.freeze({
+  server_label: 'orders',
+  server_url: 'https://mcp.example.com/mcp',
+  authorization: 'Bearer hunter2',
+});
+
 describe('GET /api/config', () => {
   let app;
 
   before(async () => {
-    app = await startApp({
-      XAI_MCP_SERVERS: JSON.stringify([{
-        server_label: 'orders',
-        server_url: 'https://mcp.example.com/mcp',
-        authorization: 'Bearer hunter2',
-      }]),
-    });
+    app = await startApp({ XAI_MCP_SERVERS: JSON.stringify([MCP]) });
   });
 
   after(() => app.close());
@@ -32,9 +35,15 @@ describe('GET /api/config', () => {
     assert.equal(body.tools.web_search, true);
     assert.equal(body.tools.x_search, true);
     assert.deepEqual(body.tools.mcp, ['orders']);
+
+    /** The label is the whole of what the page is told. Neither the URL, nor
+     *  the host on its own, nor the credential may appear anywhere in it. */
     const raw = JSON.stringify(body);
-    assert.equal(raw.includes('hunter2'), false);
-    assert.equal(raw.includes('mcp.example.com'), false);
+    const secret = [MCP.server_url, new URL(MCP.server_url).host, MCP.authorization];
+    assert.equal(secret.length, 3);
+    for (const leak of secret) {
+      assert.equal(raw.includes(leak), false, `${leak} reached /api/config`);
+    }
   });
 
   it('names the switches the page may throw, and no others', async () => {
