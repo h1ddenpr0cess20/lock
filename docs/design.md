@@ -153,6 +153,24 @@ The rest of the time it fidgets: a click or three of the dial, more often the
 more attention it is paying. Reaching for a tool pops the shackle on cue, which
 is the one unlock that isn't a whim. Being interrupted shuts it, hard.
 
+The dial is also draggable, and a hand on it beats everything above: its own run
+stops, the spring that eases it onto numbers is out of the loop, and it goes
+where the finger goes — clicks and all, since those come off the rotation rather
+than off the run. Let go mid-spin and it coasts, decelerating onto a number the
+way its own sweeps do; let go having stopped and it stays where it was put. Then
+it keeps its hands off for a second or so before picking the combination back
+up, from wherever the dial now is. Three turns of half a turn or more, and it
+opens without rolling for it.
+
+Where a pointer lands is read off the plane of the dial rather than off the
+screen — the ray is intersected with that plane and the hit taken in the case's
+frame, which the dial spins inside. So the turn survives the lock swaying,
+hopping and rolling underneath it, and the angle does not chase its own
+rotation. The stage's orbit controls live on the canvas inside its shadow root,
+so a grab is stopped on the host element, in the capture phase, before it can
+reach them: drag the dial and the camera holds still, drag anywhere else and it
+orbits as before.
+
 It cannot roll, so it gets about by hopping — a crouch, an arc, a landing that
 goes through the whole body — and only while it is thinking or talking.
 
@@ -175,6 +193,7 @@ src/
     padlock/            Geometry and animation. Knows nothing about transports
       index.js            The controller and the per-frame loop
       geometry.js         The lock itself, to a real 48 mm lock's proportions
+      grab.js             The dial under a finger: a pointer, into a turn
       moods.js            Targets per conversational state
       environment.js      Studio env map
     session/            The call. Emits transport-agnostic events
