@@ -1,0 +1,31 @@
+{
+  "name": "lock",
+  "version": "0.1.0",
+  "private": true,
+  "description": "A voice agent rendered as a combination padlock, driven by an xAI Grok speech-to-speech session",
+  "type": "module",
+  "engines": {
+    "node": ">=22.12"
+  },
+  "scripts": {
+    "dev": "vite",
+    "dev:lan": "vite --host --mode lan",
+    "build": "vite build",
+    "start": "node --env-file-if-exists=.env src/server/index.js",
+    "preview": "npm run build && npm start",
+    "preview:lan": "npm run build && npm start -- --https",
+    "test": "node --test \"test/**/*.test.js\"",
+    "lint": "eslint ."
+  },
+  "dependencies": {
+    "three": "^0.185.1",
+    "ws": "^8.21.3"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@vitejs/plugin-basic-ssl": "^2.3.0",
+    "eslint": "^10.9.1",
+    "globals": "^17.11.0",
+    "vite": "^8.2.2"
+  }
+}
