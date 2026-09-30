@@ -47,17 +47,17 @@ const TURN_MIN = TAU * 0.4;
 const HANDS_OFF_MIN = 1.1;
 const HANDS_OFF_VAR = 0.9;
 
-export function createLock({ stage, THREE }) {
-  buildEnvironment({ stage, THREE });
+export function createLock({ stage, GFX }) {
+  buildEnvironment({ stage, GFX });
 
-  const character = new THREE.Group();
+  const character = new GFX.Group();
   character.name = 'lock_character';
 
-  const body = new THREE.Group();
+  const body = new GFX.Group();
   body.name = 'body';
   character.add(body);
 
-  const { lock, dial, shackle, shut, driver } = createPadlock(THREE);
+  const { lock, dial, shackle, shut, driver } = createPadlock(GFX);
   body.add(lock);
 
   let state = 'idle';
@@ -70,7 +70,7 @@ export function createLock({ stage, THREE }) {
   let lastEnergy = 0;
   let rage = 0;
 
-  const clock = new THREE.Clock();
+  const clock = new GFX.Clock();
   let t = 0;
 
   /** Squash, and the three axes it rocks on. */
@@ -362,7 +362,7 @@ export function createLock({ stage, THREE }) {
      somebody else did the work, so it does not get to roll for it. */
   grabbableDial({
     stage,
-    THREE,
+    GFX,
     dial,
     onGrab() {
       held = true;
@@ -399,7 +399,7 @@ export function createLock({ stage, THREE }) {
   /** Three-quarters on: far enough round that the shackle swinging open reads
    *  as a swing and not just a lift, near enough to front that the dial is
    *  still a face. */
-  const dir3 = new THREE.Vector3(0.52, 0.3, 1).normalize();
+  const dir3 = new GFX.Vector3(0.52, 0.3, 1).normalize();
   stage._camera.position.copy(stage._controls.target).addScaledVector(dir3, 4);
 
   const frame = () => {
