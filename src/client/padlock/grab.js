@@ -20,12 +20,12 @@ const FLICK_MS = 90;
  * Reports the turn in radians, signed the way `dial.rotation.z` is: hand it
  * straight to the dial.
  */
-export function grabbableDial({ stage, THREE, dial, onGrab, onTurn, onRelease }) {
-  const raycaster = new THREE.Raycaster();
-  const plane = new THREE.Plane();
-  const point = new THREE.Vector3();
-  const normal = new THREE.Vector3();
-  const ndc = new THREE.Vector2();
+export function grabbableDial({ stage, GFX, dial, onGrab, onTurn, onRelease }) {
+  const raycaster = new GFX.Raycaster();
+  const plane = new GFX.Plane();
+  const point = new GFX.Vector3();
+  const normal = new GFX.Vector3();
+  const ndc = new GFX.Vector2();
 
   let held = null;
   let last = 0;

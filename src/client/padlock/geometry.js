@@ -24,7 +24,7 @@ export const SWING = 1.15;
 /** Where the case ends up standing, once the group is scaled. */
 export const BODY_HEIGHT = H * UNIT;
 
-function dialTexture(THREE) {
+function dialTexture(GFX) {
   const S = 1024, c = document.createElement('canvas');
   c.width = c.height = S;
   const g = c.getContext('2d'), C = S / 2, R = S / 2;
@@ -60,14 +60,14 @@ function dialTexture(THREE) {
   g.strokeStyle = 'rgba(240,234,222,0.28)'; g.lineWidth = 4;
   g.beginPath(); g.arc(C, C, R * 0.44, 0, 7); g.stroke();
 
-  const t = new THREE.CanvasTexture(c);
+  const t = new GFX.CanvasTexture(c);
   t.anisotropy = 8;
-  t.colorSpace = THREE.SRGBColorSpace;
+  t.colorSpace = GFX.SRGBColorSpace;
   return t;
 }
 
-function bodyShape(THREE, inset) {
-  const s = new THREE.Shape(), w = W / 2 - inset, h = H / 2 - inset;
+function bodyShape(GFX, inset) {
+  const s = new GFX.Shape(), w = W / 2 - inset, h = H / 2 - inset;
   const rt = R_TOP - inset, rb = R_BOT - inset;
   s.moveTo(-w + rb, -h);
   s.lineTo(w - rb, -h); s.quadraticCurveTo(w, -h, w, -h + rb);
@@ -77,19 +77,19 @@ function bodyShape(THREE, inset) {
   return s;
 }
 
-export function createPadlock(THREE) {
-  const steelCase = new THREE.MeshStandardMaterial({ name: 'stainless_case', color: 0xb9bec0, metalness: 0.4, roughness: 0.3 });
-  const steelShackle = new THREE.MeshStandardMaterial({ name: 'steel_shackle', color: 0xc8cdcf, metalness: 0.4, roughness: 0.18 });
-  const brass = new THREE.MeshStandardMaterial({ name: 'brass', color: 0xc09248, metalness: 0.35, roughness: 0.34 });
-  const darkSteel = new THREE.MeshStandardMaterial({ name: 'dark_steel', color: 0x35322e, metalness: 0.25, roughness: 0.6 });
-  const dialEdge = new THREE.MeshStandardMaterial({ name: 'dial_knurl', color: 0x2a2724, metalness: 0.2, roughness: 0.55, flatShading: true });
+export function createPadlock(GFX) {
+  const steelCase = new GFX.MeshStandardMaterial({ name: 'stainless_case', color: 0xb9bec0, metalness: 0.4, roughness: 0.3 });
+  const steelShackle = new GFX.MeshStandardMaterial({ name: 'steel_shackle', color: 0xc8cdcf, metalness: 0.4, roughness: 0.18 });
+  const brass = new GFX.MeshStandardMaterial({ name: 'brass', color: 0xc09248, metalness: 0.35, roughness: 0.34 });
+  const darkSteel = new GFX.MeshStandardMaterial({ name: 'dark_steel', color: 0x35322e, metalness: 0.25, roughness: 0.6 });
+  const dialEdge = new GFX.MeshStandardMaterial({ name: 'dial_knurl', color: 0x2a2724, metalness: 0.2, roughness: 0.55, flatShading: true });
 
-  const lock = new THREE.Group();
+  const lock = new GFX.Group();
   lock.name = 'combination_padlock';
   lock.scale.setScalar(UNIT);
 
   /* ── case ────────────────────────────────────────────────── */
-  const cover = new THREE.Mesh(new THREE.ExtrudeGeometry(bodyShape(THREE, 0), {
+  const cover = new GFX.Mesh(new GFX.ExtrudeGeometry(bodyShape(GFX, 0), {
     depth: 0.0135, bevelEnabled: true, bevelThickness: 0.0012,
     bevelSize: 0.0012, bevelSegments: 4, curveSegments: 24,
   }), steelCase);
@@ -97,7 +97,7 @@ export function createPadlock(THREE) {
   cover.position.z = -D / 2 + 0.0035;
   lock.add(cover);
 
-  const back = new THREE.Mesh(new THREE.ExtrudeGeometry(bodyShape(THREE, 0.0009), {
+  const back = new GFX.Mesh(new GFX.ExtrudeGeometry(bodyShape(GFX, 0.0009), {
     depth: 0.0035, bevelEnabled: true, bevelThickness: 0.0008,
     bevelSize: 0.0008, bevelSegments: 3, curveSegments: 24,
   }), darkSteel);
@@ -105,79 +105,79 @@ export function createPadlock(THREE) {
   back.position.z = -D / 2;
   lock.add(back);
 
-  const holeGeo = new THREE.CylinderGeometry(0.0039, 0.0039, 0.004, 24);
+  const holeGeo = new GFX.CylinderGeometry(0.0039, 0.0039, 0.004, 24);
   [-0.014, 0.014].forEach((x, i) => {
-    const m = new THREE.Mesh(holeGeo, darkSteel);
+    const m = new GFX.Mesh(holeGeo, darkSteel);
     m.name = `shackle_hole_${i + 1}`;
     m.position.set(x, H / 2 - 0.0016, 0);
     lock.add(m);
   });
 
   /* ── dial: a raised, knurled drum standing proud of the case ─ */
-  const collarGeo = new THREE.CylinderGeometry(DIAL_R + 0.0022, DIAL_R + 0.0032, 0.0022, 64);
+  const collarGeo = new GFX.CylinderGeometry(DIAL_R + 0.0022, DIAL_R + 0.0032, 0.0022, 64);
   collarGeo.rotateX(Math.PI / 2);
-  const collar = new THREE.Mesh(collarGeo, steelCase);
+  const collar = new GFX.Mesh(collarGeo, steelCase);
   collar.name = 'dial_collar';
   collar.position.set(0, DIAL_Y, FRONT + 0.0008);
   lock.add(collar);
 
-  const dial = new THREE.Group();
+  const dial = new GFX.Group();
   dial.name = 'dial';
   dial.position.set(0, DIAL_Y, FRONT);
   lock.add(dial);
 
-  const skirtGeo = new THREE.CylinderGeometry(DIAL_R, DIAL_R - 0.0011, 0.0052, 46);
+  const skirtGeo = new GFX.CylinderGeometry(DIAL_R, DIAL_R - 0.0011, 0.0052, 46);
   skirtGeo.rotateX(Math.PI / 2);
-  const skirt = new THREE.Mesh(skirtGeo, dialEdge);
+  const skirt = new GFX.Mesh(skirtGeo, dialEdge);
   skirt.name = 'dial_skirt';
   skirt.position.z = 0.0026;
   dial.add(skirt);
 
-  const dialFaceMat = new THREE.MeshStandardMaterial({
-    name: 'dial_face', map: dialTexture(THREE), color: 0xffffff, metalness: 0.15, roughness: 0.42,
+  const dialFaceMat = new GFX.MeshStandardMaterial({
+    name: 'dial_face', map: dialTexture(GFX), color: 0xffffff, metalness: 0.15, roughness: 0.42,
   });
-  const faceGeo = new THREE.CylinderGeometry(DIAL_R - 0.0003, DIAL_R - 0.0003, 0.0014, 64);
+  const faceGeo = new GFX.CylinderGeometry(DIAL_R - 0.0003, DIAL_R - 0.0003, 0.0014, 64);
   faceGeo.rotateX(Math.PI / 2);
-  const face = new THREE.Mesh(faceGeo, [dialEdge, dialFaceMat, dialEdge]);
+  const face = new GFX.Mesh(faceGeo, [dialEdge, dialFaceMat, dialEdge]);
   face.name = 'dial_face_plate';
   face.position.z = 0.0056;
   dial.add(face);
 
-  const hubGeo = new THREE.SphereGeometry(0.0042, 32, 20, 0, Math.PI * 2, 0, Math.PI / 2);
+  const hubGeo = new GFX.SphereGeometry(0.0042, 32, 20, 0, Math.PI * 2, 0, Math.PI / 2);
   hubGeo.rotateX(Math.PI / 2);
-  const hub = new THREE.Mesh(hubGeo, brass);
+  const hub = new GFX.Mesh(hubGeo, brass);
   hub.name = 'dial_hub';
   hub.position.z = 0.0062;
   dial.add(hub);
 
-  const index = new THREE.Mesh(new THREE.ConeGeometry(0.0028, 0.0055, 3), brass);
+  const index = new GFX.Mesh(new GFX.ConeGeometry(0.0028, 0.0055, 3), brass);
   index.name = 'index_mark';
   index.rotation.z = Math.PI;
   index.position.set(0, DIAL_Y + DIAL_R + 0.0055, FRONT + 0.0018);
   lock.add(index);
 
   /* ── shackle, pivoting on its long leg ───────────────────── */
-  const shackle = new THREE.Group();
+  const shackle = new GFX.Group();
   shackle.name = 'shackle_pivot';
   shackle.position.set(0.014, H / 2, 0);
   lock.add(shackle);
 
-  const longLeg = new THREE.Mesh(new THREE.CylinderGeometry(ROD, ROD, 0.0305, 32), steelShackle);
+  const longLeg = new GFX.Mesh(new GFX.CylinderGeometry(ROD, ROD, 0.0305, 32), steelShackle);
   longLeg.name = 'shackle_leg_long';
   longLeg.position.set(0, TOPY - 0.01525, 0);
   shackle.add(longLeg);
 
-  const shortLeg = new THREE.Mesh(new THREE.CylinderGeometry(ROD, ROD, 0.0185, 32), steelShackle);
+  const shortLeg = new GFX.Mesh(new GFX.CylinderGeometry(ROD, ROD, 0.0185, 32), steelShackle);
   shortLeg.name = 'shackle_leg_short';
   shortLeg.position.set(-SPAN, TOPY - 0.00925, 0);
   shackle.add(shortLeg);
 
-  const bend = new THREE.Mesh(new THREE.TorusGeometry(BEND, ROD, 24, 72, Math.PI), steelShackle);
+  const bend = new GFX.Mesh(new GFX.TorusGeometry(BEND, ROD, 24, 72, Math.PI), steelShackle);
   bend.name = 'shackle_bend';
   bend.position.set(-BEND, TOPY, 0);
   shackle.add(bend);
 
-  const notch = new THREE.Mesh(new THREE.CylinderGeometry(ROD * 0.6, ROD * 0.6, 0.0035, 24), darkSteel);
+  const notch = new GFX.Mesh(new GFX.CylinderGeometry(ROD * 0.6, ROD * 0.6, 0.0035, 24), darkSteel);
   notch.name = 'shackle_notch';
   notch.position.set(-SPAN, -0.0072, 0);
   shackle.add(notch);

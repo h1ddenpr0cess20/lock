@@ -4,7 +4,7 @@
  * warm bounce off to one side, and a dark floor so the metal has a horizon to
  * catch. Two brushed-steel greys with nothing to look at read as plastic.
  */
-export function buildEnvironment({ stage, THREE }) {
+export function buildEnvironment({ stage, GFX }) {
   try {
     const c = document.createElement('canvas');
     c.width = 64; c.height = 32;
@@ -24,12 +24,12 @@ export function buildEnvironment({ stage, THREE }) {
     ctx.fillStyle = 'rgba(255,214,160,0.55)';
     ctx.beginPath(); ctx.ellipse(50, 12, 8, 4, 0, 0, Math.PI * 2); ctx.fill();
 
-    const tex = new THREE.Texture(c);
-    tex.mapping = THREE.EquirectangularReflectionMapping;
-    tex.colorSpace = THREE.SRGBColorSpace;
+    const tex = new GFX.Texture(c);
+    tex.mapping = GFX.EquirectangularReflectionMapping;
+    tex.colorSpace = GFX.SRGBColorSpace;
     tex.needsUpdate = true;
 
-    const pmrem = new THREE.PMREMGenerator(stage._renderer);
+    const pmrem = new GFX.PMREMGenerator(stage._renderer);
     stage._scene.environment = pmrem.fromEquirectangular(tex).texture;
     pmrem.dispose();
     tex.dispose();
